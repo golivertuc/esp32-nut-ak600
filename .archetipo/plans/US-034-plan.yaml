@@ -1,0 +1,101 @@
+schema: archetipo/plan/v2
+spec_code: US-034
+body: "## Soluzione Tecnica\nL'infrastruttura del Web Installer è stata implementata con successo. Include la configurazione del componente `esp-web-install-button`, la generazione automatica dei binari via GitHub Actions, il deploy su GitHub Pages e i test E2E. \n\n**Rework:** È emerso un errore negli URL indicati nei due file README. L'URL corretto della pagina ospitata su GitHub Pages deve essere senza la subdirectory finale, ovvero `https://maverick1982.github.io/esp32-nut/` anziché con `/web-installer/` alla fine. Provvederemo a fixarlo.\n\n## Strategia di Testing\n- I test E2E già creati con Playwright validano l'infrastruttura.\n- La modifica dell'URL nei markdown richiede una semplice verifica visiva dell'HTML renderizzato e dei link."
+tasks:
+  - id: TASK-01
+    title: Creazione pagina HTML per Web Installer
+    type: Impl
+    status: DONE
+    body: |-
+      ## Descrizione
+      Creare la struttura della pagina `index.html` all'interno della directory `web-installer`, integrando il design del mockup e il componente `<esp-web-install-button>` da un CDN.
+
+      ## File Coinvolti
+      - `web-installer/index.html` — Struttura pagina e tag script di ESP Web Tools
+      - `web-installer/shared.css` — Fogli di stile base
+
+      ## Criteri di Completamento
+      - [ ] Il componente `<esp-web-install-button>` viene caricato correttamente nella pagina.
+      - [ ] La UI corrisponde al design minimalista hi-tech scelto per il progetto.
+    ref: TASK-01
+  - id: TASK-02
+    title: Configurazione manifest.json per ESP Web Tools
+    type: Impl
+    status: DONE
+    dependencies:
+      - TASK-01
+    body: |-
+      ## Descrizione
+      Creare il file `manifest.json` necessario a Web Tools, configurato con i corretti offset di memoria per l'ESP32-S3: bootloader (0x0), partitions (0x8000), e firmware (0x10000).
+
+      ## File Coinvolti
+      - `web-installer/manifest.json` — Definizione del nome del chip, del progetto e dell'array di build.
+
+      ## Criteri di Completamento
+      - [ ] File json validato sintatticamente.
+      - [ ] Offset corretti per il microcontrollore esp32s3.
+    ref: TASK-02
+  - id: TASK-04
+    title: Aggiornamento Documentazione
+    type: Impl
+    status: DONE
+    body: |-
+      ## Descrizione
+      Aggiornare il `README.md` principale del progetto con un link evidente e un bottone per accedere al Web Installer.
+
+      ## File Coinvolti
+      - `README.md` — Aggiunta link "Install via Browser".
+
+      ## Criteri di Completamento
+      - [ ] Il link è prominente all'inizio o nella sezione di installazione del README.
+    ref: TASK-04
+  - id: TASK-05
+    title: Configurazione infrastruttura e2e (Playwright)
+    type: Impl
+    status: DONE
+    body: |-
+      ## Descrizione
+      Inizializzare l'ambiente di test E2E eseguendo il comando `archetipo e2e ensure` per installare Playwright, configurando il framework nel repository.
+
+      ## File Coinvolti
+      - `package.json` — Aggiornamento dipendenze.
+      - `playwright.config.ts` — Configurazione del framework.
+
+      ## Criteri di Completamento
+      - [ ] L'infrastruttura Playwright è pronta per l'uso.
+    ref: TASK-05
+  - id: TASK-06
+    title: Test E2E Web Installer
+    type: Test
+    status: DONE
+    dependencies:
+      - TASK-01
+      - TASK-02
+      - TASK-05
+    body: |-
+      ## Descrizione
+      Scrivere i test E2E con Playwright per verificare che l'installer web venga servito correttamente e che la pagina contenga i pulsanti attesi e il manifest sia raggiungibile.
+
+      ## File Coinvolti
+      - `e2e/installer.spec.ts` — Test e2e sulla cartella `web-installer`.
+
+      ## Criteri di Completamento
+      - [ ] I test playwright passano verificando la presenza di `<esp-web-install-button>`.
+      - [ ] Playwright riesce a scaricare e validare il contenuto del file manifest.
+    ref: TASK-06
+  - id: TASK-07
+    title: Fix URL Web Installer nei README
+    type: Fix
+    status: DONE
+    body: |-
+      ## Descrizione
+      Durante la review è stato segnalato che l'URL per il Web Installer è errato nei file di documentazione. Dobbiamo correggere i link affinché puntino alla root corretta su GitHub Pages.
+      Modificare il link dell'installer da `https://maverick1982.github.io/esp32-nut/web-installer/` a `https://maverick1982.github.io/esp32-nut/` in entrambi i file markdown.
+
+      ## File Coinvolti
+      - `README.md` — Aggiornare l'href del tag `<a>` nell'opzione di installazione via browser.
+      - `README.it.md` — Aggiornare l'href del tag `<a>` nell'opzione di installazione via browser.
+
+      ## Criteri di Completamento
+      - [ ] Entrambi i file README puntano al nuovo URL corretto senza la stringa `/web-installer/` finale.
+    ref: TASK-07

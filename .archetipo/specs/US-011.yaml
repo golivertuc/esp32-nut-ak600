@@ -1,0 +1,39 @@
+schema: archetipo/spec/v2
+code: US-011
+title: Stabilizzazione Connessione Home Assistant
+epic:
+  code: EP-003
+  title: Server NUT
+priority: HIGH
+points: 3
+status: DONE
+body: |-
+  #### US-011: Stabilizzare la connessione del server NUT per Home Assistant
+
+  **Epic:** EP-003 | **Priority:** HIGH | **Points:** 3 | **Status:** TODO
+  **Blocked by:** -
+
+  **User Story**
+  Come utente finale (Amministratore di Home Assistant),
+  voglio che il server NUT sull'ESP32 mantenga una connessione stabile e continua con Home Assistant senza interruzioni,
+  così da non ricevere messaggi di errore "Riconfigura" e mantenere il monitoraggio affidabile nel tempo.
+
+  **Demonstrates**
+  Dopo aver implementato questa spec, Home Assistant può connettersi al server NUT sull'ESP32 e rimanere connesso indefinitamente. La connessione non cade dopo pochi secondi o minuti e in Home Assistant non compaiono richieste di errore "Riconfigura".
+
+  **Acceptance Criteria**
+  - [ ] L'implementazione del protocollo NUT gestisce correttamente i keep-alive, i ping o il polling in background da Home Assistant senza andare in timeout.
+  - [ ] Le risorse (socket, memoria) non vengono perse nel corso di richieste multiple o connessioni prolungate, prevenendo cadute per esaurimento della memoria (out-of-memory).
+  - [ ] L'ESP32 risponde correttamente a tutti i comandi NUT richiesti che Home Assistant usa per il controllo dello stato.
+  - [ ] Una connessione di test da Home Assistant rimane stabile per almeno 24 ore senza alcuna disconnessione o log di errore.
+history:
+  - status: TODO
+    at: "2026-07-11T14:09:22Z"
+  - status: PLANNED
+    at: "2026-07-11T15:24:43Z"
+  - status: IN PROGRESS
+    at: "2026-07-11T15:27:25Z"
+  - status: REVIEW
+    at: "2026-07-11T15:32:17Z"
+  - status: DONE
+    at: "2026-07-12T08:01:21Z"

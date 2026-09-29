@@ -1,0 +1,131 @@
+schema: archetipo/plan/v2
+spec_code: US-017
+body: |-
+  ## Rework Plan
+
+  Il piano indirizza il feedback ricevuto in fase di review:
+  1. **CSS Corruption:** Il file `shared.css` è stato corrotto (UTF-16LE null bytes) durante l'append dello stile OTA. Verrà ripristinato ripulendo i null bytes e unificando correttamente le direttive CSS.
+  2. **OTA Upload Failure:** L'upload OTA fallisce probabilmente a causa di `UPDATE_SIZE_UNKNOWN` non sempre digerito da tutti i core ESP32, o per la gestione dell'oggetto `FormData` via XHR. Verrà aggiornato il backend per usare `ESP.getFreeSketchSpace()` come fallback sicuro, e migliorato il logging degli errori di `Update.h` per debug. Verrà inolte controllata l'inizializzazione corretta della Request HTTP nel frontend.
+
+  ## Test Strategy
+  - E2E Playwright test (già definito) assicurerà che l'upload flow sia navigabile.
+  - Test unitari aggiornati se necessario.
+tasks:
+  - id: TASK-01
+    title: Implementare handler OTA firmware nel WebConfigServer
+    type: Impl
+    status: DONE
+    body: |-
+      ## Descrizione
+      Aggiungere gli endpoint `/update` (GET per pagina e POST per upload) in `WebConfigServer`.
+
+      ## File Coinvolti
+      - `include/web_config_server.h` — dichiarazioni handler OTA.
+      - `src/web_config_server.cpp` — implementare handler OTA (solo U_FLASH) con validazione magic byte (0xE9) e registrazione endpoint.
+
+      ## Criteri di Completamento
+      - [ ] `handleOTAPage()` serve la pagina tramite `server.send_P(200, "text/html", update_html_array, update_html_len)`
+      - [ ] `handleOTAUpload()` gestisce upload via `Update.begin(..., U_FLASH)`
+      - [ ] Validazione magic byte `0xE9` per firmware
+      - [ ] Reboot automatico dopo successo
+    ref: TASK-01
+  - id: TASK-02
+    title: Creare pagina HTML per aggiornamento OTA (solo Firmware)
+    type: Impl
+    status: DONE
+    body: |-
+      ## Descrizione
+      Creare `data/www/update.html` con interfaccia singola (no selettore filesystem). Lo script di US-024 lo ingloberà.
+
+      ## File Coinvolti
+      - `data/www/update.html` — nuova pagina OTA standalone
+      - `data/www/shared.css` — stili per OTA
+
+      ## Criteri di Completamento
+      - [ ] Dropzone con upload per solo firmware
+      - [ ] Barra progresso e indicatori di stato successo/errore
+      - [ ] Upload invia file in POST a `/update`
+    ref: TASK-02
+  - id: TASK-03
+    title: Integrare tab OTA nella navigazione principale
+    type: Impl
+    status: DONE
+    dependencies:
+      - TASK-02
+    body: |-
+      ## Descrizione
+      Aggiungere il link per OTA nella sidebar di `data/www/index.html` e `app.js`.
+
+      ## File Coinvolti
+      - `data/www/index.html` — aggiornare placeholder tab OTA
+      - `data/www/app.js` — redirect a `/update` al click sul tab
+
+      ## Criteri di Completamento
+      - [ ] Click sul tab OTA nella index naviga su `/update`
+      - [ ] Pagina `/update` ha link di ritorno
+    ref: TASK-03
+  - id: TASK-04
+    title: Test unitari per handler OTA
+    type: Test
+    status: DONE
+    dependencies:
+      - TASK-01
+    body: |-
+      ## Descrizione
+      Test unitari per upload magic byte (valido/invalido), vuoto.
+
+      ## File Coinvolti
+      - `test/test_ota_handler/test_main.cpp` — creare test.
+
+      ## Criteri di Completamento
+      - [ ] Unity test superati per logica OTA
+    ref: TASK-04
+  - id: TASK-05
+    title: Test E2E Playwright OTA Firmware
+    type: Test
+    status: DONE
+    dependencies:
+      - TASK-02
+      - TASK-03
+    body: |-
+      ## Descrizione
+      Test e2e Playwright per caricamento pagina, drop file, progress.
+
+      ## File Coinvolti
+      - `tests/ota-update.spec.ts` — test Playwright
+
+      ## Criteri di Completamento
+      - [ ] Test Playwright superati
+    ref: TASK-05
+  - id: TASK-06
+    title: Fix CSS Encoding & Layout OTA
+    type: Impl
+    status: DONE
+    body: |-
+      ## Descrizione
+      Il file `shared.css` è stato corrotto da un append in formato UTF-16LE, aggiungendo null bytes tra i caratteri. Questo causa la rottura degli stili sulla pagina OTA. Occorre ripulire i null bytes e unificare correttamente gli stili.
+
+      ## File Coinvolti
+      - `data/www/shared.css`
+
+      ## Criteri di Completamento
+      - [ ] `shared.css` è in formato UTF-8 valido senza null bytes.
+      - [ ] Gli stili `.ota-container`, `.dropzone`, `.progress-bar` sono applicati correttamente.
+    ref: TASK-06
+  - id: TASK-07
+    title: Fix Backend OTA Upload Logic
+    type: Impl
+    status: DONE
+    body: |-
+      ## Descrizione
+      L'upload OTA fallisce sul backend. L'utilizzo di `UPDATE_SIZE_UNKNOWN` in `Update.begin()` può causare problemi. Sostituire con `ESP.getFreeSketchSpace()`. Assicurarsi che la logica di `app.js` e `update.html` invii correttamente il form, e che gli errori di libreria vengano loggati per un debug più chiaro.
+
+      ## File Coinvolti
+      - `src/web_config_server.cpp`
+      - `data/www/update.html`
+
+      ## Criteri di Completamento
+      - [ ] L'upload del firmware carica correttamente il payload in flash.
+      - [ ] Il magic byte check funziona regolarmente.
+      - [ ] Il frontend riceve `OK` dal backend e avvia il countdown.
+    ref: TASK-07

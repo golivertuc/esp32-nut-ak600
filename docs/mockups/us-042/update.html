@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 NUT - OTA Update</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300f0ff' stroke-width='2'%3E%3Cpath d='M13 2L3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="shared.css">
+</head>
+<body style="background-color: var(--bg-base); color: var(--text-primary); font-family: var(--font-ui);">
+    <div class="ota-container">
+        <h2>OTA Firmware Update</h2>
+        <p>Drag and drop the compiled .bin file below or click to select.</p>
+        
+        <div class="dropzone" id="dropzone">
+            <p>Drag the .bin file here or click to upload</p>
+            <input type="file" id="fileInput" accept=".bin">
+        </div>
+
+        <div class="progress-bar-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div class="status" id="statusMessage"></div>
+        
+        <a href="/" class="btn-back">&larr; Back to Home</a>
+    </div>
+
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const statusMessage = document.getElementById('statusMessage');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                uploadFile();
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                uploadFile();
+            }
+        });
+
+        function uploadFile() {
+            const file = fileInput.files[0];
+            if (!file || !file.name.endsWith('.bin')) {
+                showStatus('Please select a valid .bin file.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('update', file);
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/update', true);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    progressContainer.style.display = 'block';
+                    progressBar.style.width = percentComplete + '%';
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 200 && xhr.responseText.trim() === 'OK') {
+                    showStatus('Update complete! Rebooting...', 'success');
+                    progressBar.style.backgroundColor = '#28a745';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 5000);
+                } else {
+                    showStatus('Error during update.', 'error');
+                    progressBar.style.backgroundColor = '#dc3545';
+                }
+            };
+
+            xhr.onerror = () => {
+                showStatus('Network error during upload.', 'error');
+                progressBar.style.backgroundColor = '#dc3545';
+            };
+
+            showStatus('Uploading...', '');
+            xhr.send(formData);
+        }
+
+        function showStatus(message, className) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status ' + className;
+        }
+    </script>
+</body>
+</html>

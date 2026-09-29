@@ -1,0 +1,66 @@
+#ifndef I_USB_HOST_UPS_H
+#define I_USB_HOST_UPS_H
+
+#include <Arduino.h>
+#include <vector>
+#include "UPSData.h"
+#include "HIDUsages.h"
+#include "HIDParser.h"
+
+class IUSBHostUPS {
+public:
+    virtual ~IUSBHostUPS() = default;
+    virtual void end() {}
+    virtual void lock() const = 0;
+    virtual void unlock() const = 0;
+    
+    class UPSDataLock {
+    private:
+        const UPSData& _data;
+        const IUSBHostUPS* _host;
+    public:
+        UPSDataLock(const UPSData& data, const IUSBHostUPS* host) : _data(data), _host(host) {
+            if (_host) _host->lock();
+        }
+        ~UPSDataLock() {
+            if (_host) _host->unlock();
+        }
+        UPSDataLock(const UPSDataLock&) = delete;
+        UPSDataLock& operator=(const UPSDataLock&) = delete;
+        UPSDataLock(UPSDataLock&& other) noexcept : _data(other._data), _host(other._host) {
+            other._host = nullptr;
+        }
+        const UPSData* operator->() const { return &_data; }
+        const UPSData& get() const { return _data; }
+    };
+
+    virtual UPSDataLock getUPSData() const = 0;
+    virtual String getUPSStatusString() const = 0;
+    virtual bool setBeeper(bool enable) = 0;
+    virtual bool isConnected() const = 0;
+    // True when the values can no longer be refreshed: control pipe not answering, or
+    // no device attached (after the boot grace). Consumers must not serve them as current.
+    virtual bool isDataStale() const { return false; }
+    virtual bool supportsBeeperToggle() const { return true; }
+
+    virtual const std::vector<HIDUsageDef>& getUsages() const = 0;
+    virtual const HIDUsageDef* getUsageDef(uint32_t usage) const = 0;
+    virtual const HIDParser* getHIDParser() const = 0;
+    virtual String getActiveBeeperPath() const = 0;
+    virtual uint32_t getQuirks() const = 0;
+    // True while polling backs off after a link failure: drivers skip their poll steps
+    virtual bool isPollingPaused() const = 0;
+    virtual bool requestReport(uint8_t report_id, uint8_t report_type, uint16_t expected_length = 8) = 0;
+    // Fetches a string descriptor and hands it to the driver's parseStringDescriptor()
+    virtual bool requestStringDescriptor(uint8_t string_index) = 0;
+    virtual uint16_t getVID() const { return 0; }
+    virtual uint16_t getPID() const { return 0; }
+    virtual void logDebug(const String& msg) const {}
+
+    // String indices of the device descriptor, set when the interface is claimed
+    uint8_t _iManufacturer = 0;
+    uint8_t _iProduct = 0;
+    uint8_t _iSerialNumber = 0;
+};
+
+#endif // I_USB_HOST_UPS_H
