@@ -127,7 +127,10 @@ Source `.3mf` models, original `.f3d` CAD files, and additional photos are avail
 You can install the firmware directly from your browser without downloading any tools!
 👉 <a href="https://maverick1982.github.io/esp32-nut/" target="_blank">**Install via Browser**</a>
 
-**Option B: Manual Build via PlatformIO**
+**Option B: Prebuilt Binaries (esptool)**
+Prebuilt firmware for ESP32-S3 (8 MB) is in [`firmware/esp32-s3-standard/`](firmware/esp32-s3-standard/) with SHA256 checksums and a full step-by-step flashing guide: [firmware/FLASHING.md](firmware/FLASHING.md).
+
+**Option C: Manual Build via PlatformIO**
 1. Clone this repository.
 2. Open the project folder in VSCode with the PlatformIO extension.
 3. Connect your ESP32-S3 to your PC (using the UART/UART-Prog USB port).
@@ -160,6 +163,8 @@ You can support the project via:
 
 Thank you to everyone who supports this project! 🚀
 
-## 📄 License
+## 📄 License & Attribution
+
+This project is a fork of [maverick1982/esp32-nut](https://github.com/maverick1982/esp32-nut) (v1.6.1, MIT License, © Pasquale Cuorpo) with the addition of the **KraulerDriver** for TBCin AK-600 / Megatec Q1 UPS chips (designed against the NUT `blazer_usb` reference). Full source attribution and the files added in this fork are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
